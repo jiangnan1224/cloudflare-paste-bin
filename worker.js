@@ -210,14 +210,22 @@ const htmlTemplate = `
       <!-- 读取内容页面 -->
       <div id="readPage" class="space-y-6 hidden">
         <div class="relative group">
-          <input 
-            type="text" 
-            id="readKey" 
-            placeholder="输入要读取的内容标识符" 
-            class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all"
-          >
-          <div class="absolute bottom-[-20px] left-0 text-xs text-gray-500 dark:text-gray-400">
-            输入之前保存时使用的标识符
+          <div class="flex gap-2">
+            <div class="flex-1 relative">
+              <input 
+                type="text" 
+                id="readKey" 
+                placeholder="输入要读取的内容标识符" 
+                class="w-full px-4 py-3 rounded-lg border-2 border-slate-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all"
+              >
+              <div class="absolute bottom-[-20px] left-0 text-xs text-gray-500 dark:text-gray-400">
+                输入之前保存时使用的标识符
+              </div>
+            </div>
+            <button id="readBtn" class="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 dark:from-purple-700 dark:to-purple-800 dark:hover:from-purple-600 dark:hover:to-purple-700 text-white font-semibold shadow-lg shadow-purple-500/20 dark:shadow-purple-800/30 transform hover:scale-105 active:scale-95 transition-all duration-200 whitespace-nowrap">
+              <i class="fas fa-cloud-download-alt text-lg"></i>
+              <span>读取</span>
+            </button>
           </div>
         </div>
         
@@ -231,10 +239,6 @@ const htmlTemplate = `
         </div>
 
         <div class="flex flex-wrap gap-4 justify-center">
-          <button id="readBtn" class="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 dark:from-purple-700 dark:to-purple-800 dark:hover:from-purple-600 dark:hover:to-purple-700 text-white font-semibold shadow-lg shadow-purple-500/20 dark:shadow-purple-800/30 transform hover:scale-105 active:scale-95 transition-all duration-200">
-            <i class="fas fa-cloud-download-alt text-lg"></i>
-            <span>从云端读取</span>
-          </button>
           <button id="deleteBtn" class="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 dark:from-red-700 dark:to-red-800 dark:hover:from-red-600 dark:hover:to-red-700 text-white font-semibold shadow-lg shadow-red-500/20 dark:shadow-red-800/30 transform hover:scale-105 active:scale-95 transition-all duration-200">
             <i class="fas fa-trash-alt text-lg"></i>
             <span>删除内容</span>
@@ -248,21 +252,15 @@ const htmlTemplate = `
     </div>
   </div>
 
-  <!-- 自定义提示框 -->
-  <div id="customAlert" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-    <div class="w-11/12 max-w-md transform scale-95 opacity-0 transition-all duration-300">
-      <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3 mb-4">
-          <div id="alertIcon" class="w-8 h-8 rounded-full flex items-center justify-center">
-            <i id="alertIconClass" class="text-lg"></i>
-          </div>
-          <h3 id="alertTitle" class="text-lg font-semibold text-gray-800 dark:text-gray-200"></h3>
+  <!-- 自定义 Toast 提示 -->
+  <div id="customToast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 min-w-64">
+      <div class="flex items-center gap-3">
+        <div id="toastIcon" class="w-6 h-6 rounded-full flex items-center justify-center">
+          <i id="toastIconClass" class="text-sm"></i>
         </div>
-        <p id="alertMessage" class="text-gray-600 dark:text-gray-300 mb-6"></p>
-        <div class="flex justify-end">
-          <button id="alertConfirm" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
-            确定
-          </button>
+        <div class="flex-1">
+          <p id="toastMessage" class="text-sm font-medium text-gray-800 dark:text-gray-200"></p>
         </div>
       </div>
     </div>
@@ -282,54 +280,43 @@ const htmlTemplate = `
     const readTab = document.getElementById('readTab');
     const createPage = document.getElementById('createPage');
     const readPage = document.getElementById('readPage');
-    const customAlert = document.getElementById('customAlert');
-    const alertIcon = document.getElementById('alertIcon');
-    const alertIconClass = document.getElementById('alertIconClass');
-    const alertTitle = document.getElementById('alertTitle');
-    const alertMessage = document.getElementById('alertMessage');
-    const alertConfirm = document.getElementById('alertConfirm');
+    const customToast = document.getElementById('customToast');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastIconClass = document.getElementById('toastIconClass');
+    const toastMessage = document.getElementById('toastMessage');
 
-    // 自定义提示框函数
-    function showCustomAlert(title, message, type = 'info') {
+    // 自定义 Toast 提示函数
+    function showToast(message, type = 'info') {
       const config = {
         success: {
           icon: 'fas fa-check',
           bgColor: 'bg-green-100 dark:bg-green-900/20',
-          textColor: 'text-green-600 dark:text-green-400',
-          titleColor: 'text-green-800 dark:text-green-200'
+          textColor: 'text-green-600 dark:text-green-400'
         },
         error: {
           icon: 'fas fa-exclamation-triangle',
           bgColor: 'bg-red-100 dark:bg-red-900/20',
-          textColor: 'text-red-600 dark:text-red-400',
-          titleColor: 'text-red-800 dark:text-red-200'
+          textColor: 'text-red-600 dark:text-red-400'
         },
         info: {
           icon: 'fas fa-info-circle',
           bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-          textColor: 'text-blue-600 dark:text-blue-400',
-          titleColor: 'text-blue-800 dark:text-blue-200'
+          textColor: 'text-blue-600 dark:text-blue-400'
         }
       };
 
       const style = config[type];
-      alertIcon.className = \`w-8 h-8 rounded-full flex items-center justify-center \${style.bgColor}\`;
-      alertIconClass.className = \`\${style.icon} \${style.textColor} text-lg\`;
-      alertTitle.className = \`text-lg font-semibold \${style.titleColor}\`;
-      alertTitle.textContent = title;
-      alertMessage.textContent = message;
+      toastIcon.className = \`w-6 h-6 rounded-full flex items-center justify-center \${style.bgColor}\`;
+      toastIconClass.className = \`\${style.icon} \${style.textColor} text-sm\`;
+      toastMessage.textContent = message;
 
-      customAlert.style.pointerEvents = 'auto';
-      customAlert.style.opacity = '1';
-      customAlert.querySelector('div').style.opacity = '1';
-      customAlert.querySelector('div').style.transform = 'scale(1)';
-    }
-
-    function hideCustomAlert() {
-      customAlert.style.opacity = '0';
-      customAlert.style.pointerEvents = 'none';
-      customAlert.querySelector('div').style.opacity = '0';
-      customAlert.querySelector('div').style.transform = 'scale(0.95)';
+      // 显示 toast
+      customToast.style.transform = 'translateX(0)';
+      
+      // 3秒后自动隐藏
+      setTimeout(() => {
+        customToast.style.transform = 'translateX(full)';
+      }, 3000);
     }
 
     // 自动检测暗黑模式
@@ -365,12 +352,20 @@ const htmlTemplate = `
     createTab.addEventListener('click', switchToCreate);
     readTab.addEventListener('click', switchToRead);
 
+    // 回车键触发读取功能
+    readKey.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        readBtn.click();
+      }
+    });
+
     saveBtn.addEventListener('click', async () => {
       const key = clipboardKey.value.trim();
       const content = clipboardTextarea.value.trim();
       
       if (!key || !content) {
-        showCustomAlert('提示', '请填写完整的标识符和内容！', 'info');
+        showToast('请填写完整的标识符和内容！', 'info');
         return;
       }
 
@@ -386,45 +381,44 @@ const htmlTemplate = `
         });
 
         if (response.ok) {
-          showCustomAlert('成功', '已保存到云端！', 'success');
-          clipboardKey.value = '';
-          clipboardTextarea.value = '';
+          showToast('已保存到云端！', 'success');
+          // 保存成功后不清空内容，方便用户继续编辑
         } else {
           const error = await response.text();
-          showCustomAlert('错误', '保存失败：' + error, 'error');
+          showToast('保存失败：' + error, 'error');
         }
       } catch (error) {
-        showCustomAlert('错误', '保存失败：' + error.message, 'error');
+        showToast('保存失败：' + error.message, 'error');
       } finally {
         saveBtn.classList.remove('opacity-60', 'pointer-events-none');
       }
     });
 
     deleteBtn.addEventListener('click', async () => {
-      const key = readKey.value.trim(); // 从读取页面获取key
+      const key = readKey.value.trim();
       
       if (!key) {
-        showCustomAlert('提示', '请输入要删除的内容标识符！', 'info');
+        showToast('请输入要删除的内容标识符！', 'info');
         return;
       }
 
       deleteBtn.classList.add('opacity-60', 'pointer-events-none');
       
       try {
-        const response = await fetch(\`/delete/\${key}\`, { // 使用 /delete/ 路径
+        const response = await fetch(\`/delete/\${key}\`, {
           method: 'DELETE'
         });
 
         if (response.ok) {
-          showCustomAlert('成功', '内容已删除！', 'success');
-          readKey.value = ''; // 清空输入框
-          readContent.value = ''; // 清空内容区域
+          showToast('内容已删除！', 'success');
+          readKey.value = '';
+          readContent.value = '';
         } else {
           const error = await response.text();
-          showCustomAlert('错误', '删除失败：' + error, 'error');
+          showToast('删除失败：' + error, 'error');
         }
       } catch (error) {
-        showCustomAlert('错误', '删除失败：' + error.message, 'error');
+        showToast('删除失败：' + error.message, 'error');
       } finally {
         deleteBtn.classList.remove('opacity-60', 'pointer-events-none');
       }
@@ -433,25 +427,25 @@ const htmlTemplate = `
     readBtn.addEventListener('click', async () => {
       const key = readKey.value.trim();
       if (!key) {
-        showCustomAlert('提示', '请输入标识符！', 'info');
+        showToast('请输入标识符！', 'info');
         return;
       }
 
       readBtn.classList.add('opacity-60', 'pointer-events-none');
       
       try {
-        const response = await fetch(\`/read/\${key}\`); // 使用 /read/ 路径
+        const response = await fetch(\`/read/\${key}\`);
         if (response.ok) {
           const content = await response.text();
           readContent.value = content;
-          showCustomAlert('成功', '内容读取成功！', 'success');
+          showToast('内容读取成功！', 'success');
         } else {
           const error = await response.text();
-          showCustomAlert('错误', '读取失败：' + error, 'error');
+          showToast('读取失败：' + error, 'error');
           readContent.value = '';
         }
       } catch (error) {
-        showCustomAlert('错误', '读取失败：' + error.message, 'error');
+        showToast('读取失败：' + error.message, 'error');
         readContent.value = '';
       } finally {
         readBtn.classList.remove('opacity-60', 'pointer-events-none');
@@ -461,22 +455,13 @@ const htmlTemplate = `
     copyBtn.addEventListener('click', () => {
       clipboardTextarea.select();
       document.execCommand('copy');
-      showCustomAlert('成功', '已复制到本地剪贴板！', 'success');
+      showToast('已复制到本地剪贴板！', 'success');
     });
 
     copyReadBtn.addEventListener('click', () => {
       readContent.select();
       document.execCommand('copy');
-      showCustomAlert('成功', '已复制到本地剪贴板！', 'success');
-    });
-
-    alertConfirm.addEventListener('click', hideCustomAlert);
-
-    // 点击背景关闭提示框
-    customAlert.addEventListener('click', (event) => {
-      if (event.target === customAlert) {
-        hideCustomAlert();
-      }
+      showToast('已复制到本地剪贴板！', 'success');
     });
   </script>
 </body>
