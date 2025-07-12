@@ -253,7 +253,7 @@ const htmlTemplate = `
   </div>
 
   <!-- 自定义 Toast 提示 -->
-  <div id="customToast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+  <div id="customToast" class="fixed top-4 right-4 z-50 opacity-0 scale-95 transform translate-x-full transition-all duration-300">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 min-w-64">
       <div class="flex items-center gap-3">
         <div id="toastIcon" class="w-6 h-6 rounded-full flex items-center justify-center">
@@ -285,6 +285,8 @@ const htmlTemplate = `
     const toastIconClass = document.getElementById('toastIconClass');
     const toastMessage = document.getElementById('toastMessage');
 
+    let toastTimeout = null;
+
     // 自定义 Toast 提示函数
     function showToast(message, type = 'info') {
       const config = {
@@ -310,12 +312,19 @@ const htmlTemplate = `
       toastIconClass.className = \`\${style.icon} \${style.textColor} text-sm\`;
       toastMessage.textContent = message;
 
-      // 显示 toast
-      customToast.style.transform = 'translateX(0)';
+      // 清除之前的定时器
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      // 显示 toast 动画 - 滑入 + 淡入 + 缩放
+      customToast.style.transform = 'translateX(0) scale(1)';
+      customToast.style.opacity = '1';
       
-      // 3秒后自动隐藏
-      setTimeout(() => {
-        customToast.style.transform = 'translateX(full)';
+      // 3秒后自动隐藏 - 滑出 + 淡出 + 缩放
+      toastTimeout = setTimeout(() => {
+        customToast.style.transform = 'translateX(full) scale(0.95)';
+        customToast.style.opacity = '0';
       }, 3000);
     }
 
